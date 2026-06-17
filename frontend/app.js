@@ -26,7 +26,7 @@ function applyRoleVisibility() {
     document.getElementById("adminAddBookSection").style.display = is_admin ? "block" : "none";
     document.getElementById("adminAddUserSection").style.display = is_admin ? "block" : "none";
     document.getElementById("adminUsersTableSection").style.display = is_admin ? "block" : "none";
-    document.getElementById("adminIssueSection").style.display = is_admin ? "block" : "none"; // Updated target
+    document.getElementById("everyoneIssueSection").style.display = "block";
 
     // EVERYONE panel (Always visible to both roles)
     document.getElementById("everyoneReturnSection").style.display = "block";
@@ -343,13 +343,63 @@ async function issueBook() {
 
 async function returnBook() {
     const bookId = document.getElementById("returnBookId").value;
-    await fetch(
-        `${API_URL}/${bookId}/return`,
-        {
-            method: "POST"
-        }
-    );
+    if(!bookId)
+        return;
+    const response = await fetch(`${API_URL}/${bookId}/return`,{method: "POST"});
+    const text = await response.text();
+    alert(text);
     loadBooks();
+    if(document.getElementById("viewUserBooksId").value.trim())
+        viewMyBorrowedBooks();
+}
+
+async function viewMyBorrowedBooks() {
+    const userIdInput = document.getElementById("viewUserBooksId").value.trim();
+    const table = document.getElementById("myBorrowedTable");
+    const tbody = document.querySelector("#myBorrowedTable tbody");
+    const noBooksMsg = document.getElementById("noBooksMessage");
+
+    if (!userIdInput) {
+        alert("Please enter a valid User ID to check your borrowed items.");
+        return;
+    }
+
+    const userId = parseInt(userIdInput);
+
+    try {
+        // Fetch the fresh master list from your backend API
+        const response = await fetch(API_URL);
+        const allBooks = await response.json();
+
+        // Filter out books where issuedToUserId matches the entered ID
+        const myBorrowedBooks = allBooks.filter(book => book.issuedToUserId === userId);
+
+        // Clear previous rows
+        tbody.innerHTML = "";
+
+        if (myBorrowedBooks.length === 0) {
+            // Show "no books" message and hide the table
+            table.style.display = "none";
+            noBooksMsg.style.display = "block";
+        } else {
+            // Hide message and construct table rows
+            noBooksMsg.style.display = "none";
+            table.style.display = "table";
+
+            myBorrowedBooks.forEach(book => {
+                tbody.innerHTML += `
+                <tr>
+                    <td>${book.bookId}</td>
+                    <td>${book.isbn ?? "N/A"}</td>
+                    <td>${book.title}</td>
+                    <td>${book.author}</td>
+                </tr>`;
+            });
+        }
+    } catch (error) {
+        console.error("Error fetching personal inventory tracking:", error);
+        alert("Failed to pull your personal account list from the server.");
+    }
 }
 
 loadBooks();

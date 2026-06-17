@@ -56,3 +56,15 @@ td {
     color: white;
     border-color: #007bff;
 }
+
+#noBooksMessage {
+    display: none;
+    color: #666;
+    font-style: italic;
+    margin-top: 10px;
+}
+
+#myBorrowedTable {
+    display: none;
+    margin-top: 15px;
+}
