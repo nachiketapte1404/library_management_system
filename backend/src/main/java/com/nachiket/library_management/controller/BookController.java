@@ -2,6 +2,7 @@ package com.nachiket.library_management.controller;
 
 import com.nachiket.library_management.model.AcademicBook;
 import com.nachiket.library_management.model.Book;
+import com.nachiket.library_management.model.BookInventoryDto;
 import com.nachiket.library_management.model.FictionBook;
 import com.nachiket.library_management.model.Magazine;
 import com.nachiket.library_management.service.LibraryService;
@@ -63,10 +64,13 @@ public class BookController {
     }
 
     @GetMapping
-    public List<Book> getBooks() {
-
-        return libraryService.getAllBooks();
+    public List<BookInventoryDto> getBook() {
+        return libraryService.getAggregatedInventory();
     }
+    // public List<Book> getBooks() {
+
+    //     return libraryService.getAllBooks();
+    // }
 
     @GetMapping("/{bookId}")
     public Book searchBook(@PathVariable int bookId) {
@@ -84,10 +88,19 @@ public class BookController {
     }
 
     @PostMapping("/{bookId}/issue/{userId}")
-    public String issueBook(@PathVariable int bookId, @PathVariable int userId) {
-        boolean issued = libraryService.issueBook(bookId, userId);
-        System.out.println("Issued to user: " + userId);
-        return issued ? "Book Issued" : "Issue Failed";
+    
+    public ResponseEntity<String> issueBook(@PathVariable String isbn, @PathVariable int userId) {
+        boolean issued = libraryService.issueBookByIsbn(isbn, userId);
+        if(issued)
+        {
+            System.out.println("Issued to user: " + userId);
+            return ResponseEntity.ok("Book checked out successfully");
+        }
+        else
+        {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Issue Failed: No available copies left for ISBN: " + isbn);
+
+        }
     }
 
     @PostMapping("/{bookId}/return")

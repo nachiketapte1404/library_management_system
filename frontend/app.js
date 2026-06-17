@@ -217,28 +217,41 @@ async function addBookBatch() {
 // }
 
 async function loadBooks() {
-    const response = await fetch(API_URL);
-    const books = await response.json();
-    console.log("Loading books...");
-    console.log(books);
-    const tbody = document.querySelector("#bookTable tbody");
-    tbody.innerHTML = "";
+    try {
+        const response = await fetch(API_URL);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-    const is_admin = (currentRole === "ADMIN");
-    books.forEach(book => {
-        let actionCell = is_admin ? `<td><button onclick="deleteBook(${book.bookId})">Delete</button></td>` : "";
+        const catalog = await response.json(); // Defined safely inside the try block
+        const tbody = document.querySelector("#bookTable tbody");
+        if (!tbody) return; // Guard clause in case table isn't rendered yet
 
-        tbody.innerHTML += `
-        <tr>
-            <td>${book.bookId}</td>
-            <td>${book.isbn ?? "N/A"}</td>
-            <td>${book.title}</td>
-            <td>${book.author}</td>
-            <td>${book.available}</td>
-            <td>${book.issuedToUserId ?? "None"}</td>
-            ${actionCell}
-        </tr>`;
-    });
+        tbody.innerHTML = "";
+        const is_admin = (currentRole === 'ADMIN');
+
+        catalog.forEach(item => {
+            // N/A button placeholder for aggregated rows
+            let actionCell = is_admin ? `<td><button style="opacity:0.5; cursor:not-allowed;" disabled>N/A</button></td>` : "";
+
+            tbody.innerHTML += `
+            <tr>
+                <td><strong>${item.isbn}</strong></td>
+                <td>${item.title}</td>
+                <td>${item.author}</td>
+                <td>${item.type}</td>
+                <td>${item.extraField}</td>
+                <td>${item.totalCopies}</td>
+                <td style="color: ${item.availableCopies > 0 ? 'green' : 'red'}; font-weight: bold;">
+                    ${item.availableCopies}
+                </td>
+                <td>${item.borrowedCopies}</td>
+                ${actionCell}
+            </tr>`;
+        });
+    } catch (error) {
+        console.error("Error loading aggregated catalog view:", error);
+    }
 }
 
 async function searchBook() {
@@ -318,38 +331,37 @@ async function loadUsers() {
 }
 
 async function issueBook() {
-    const bookId = document.getElementById("issueBookId").value;
-    const userId = document.getElementById("issueUserId").value;
-    if (!bookId || !userId) {
-        alert("Please enter both a Book ID and a User ID.");
+    const isbn = document.getElementById("issueIsbn").value.trim();
+    const userId = document.getElementById("issueUserId").value.trim();
+    if (!isbn || !userId) {
+        alert("Please enter both the Book ISBN and the target User ID.");
         return;
     }
     try {
-        const response = await fetch(`${API_URL}/${bookId}/issue/${userId}`, {
+        const response = await fetch(`${API_URL}/issue/${isbn}/${userId}`, {
             method: "POST"
         });
-        const resultText = await response.text();
-        if (response.ok && resultText === "Book Issued") {
-            alert("Success: " + resultText);
-            loadBooks();
-        } else {
-            alert("Error: " + resultText);
+        const textReponse = await response.text();
+        alert(textReponse);
+        if (response.ok) {
+            document.getElementById("issueIsbn").value = "";
+            document.getElementById("issueUserId").value = "";
+            loadBooks(); // Dynamic catalog reload
         }
-    }
-    catch (error) {
-        console.error("Network error: ", error);
+    } catch (error) {
+        console.error("Error issuing book asset:", error);
     }
 }
 
 async function returnBook() {
     const bookId = document.getElementById("returnBookId").value;
-    if(!bookId)
+    if (!bookId)
         return;
-    const response = await fetch(`${API_URL}/${bookId}/return`,{method: "POST"});
+    const response = await fetch(`${API_URL}/${bookId}/return`, { method: "POST" });
     const text = await response.text();
     alert(text);
     loadBooks();
-    if(document.getElementById("viewUserBooksId").value.trim())
+    if (document.getElementById("viewUserBooksId").value.trim())
         viewMyBorrowedBooks();
 }
 

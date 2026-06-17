@@ -98,12 +98,14 @@
       <table id="bookTable">
         <thead>
           <tr>
-            <th>ID</th>
             <th>ISBN</th>
             <th>Title</th>
             <th>Author</th>
+            <th>Classification</th>
+            <th>Extra Spec</th>
+            <th>Total Copies</th>
             <th>Available</th>
-            <th>Issued To</th>
+            <th>Borrowed</th>
             <th class="admin-action-col">Action</th>
           </tr>
         </thead>
@@ -155,7 +157,7 @@
 
       <div id="everyoneIssueSection">
         <h2>Issue Book</h2>
-        <input type="number" id="issueBookId" placeholder="Book ID" />
+        <input type="text" id="issueIsbn" placeholder="Enter Book ISBN" />
         <input type="number" id="issueUserId" placeholder="User ID" />
         <button onclick="issueBook()">Issue</button>
       </div>

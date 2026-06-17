@@ -2,13 +2,16 @@ package com.nachiket.library_management.service;
 
 import com.nachiket.library_management.model.AcademicBook;
 import com.nachiket.library_management.model.Book;
+import com.nachiket.library_management.model.BookInventoryDto;
 import com.nachiket.library_management.model.FictionBook;
 import com.nachiket.library_management.model.Magazine;
 import com.nachiket.library_management.model.User;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-// import java.util.ArrayList;
+import java.util.Map;
 
 @Service
 public class LibraryService {
@@ -129,6 +132,20 @@ public class LibraryService {
         return true;
     }
 
+    public boolean issueBookByIsbn(String isbn, int userId) {
+        for (Book book : books) {
+            // Find the first physical copy matching the ISBN that is currently free
+            if (book.getIsbn() != null && book.getIsbn().equalsIgnoreCase(isbn) && book.isAvailable()) {
+                book.setAvailable(false);
+                book.setIssuedToUserId(userId);
+                fileManager.saveBooks(books);
+                System.out.println("Auto-assigned Physical Book ID: " + book.getBookId() + " to user: " + userId);
+                return true;
+            }
+        }
+        return false; // No copies left or ISBN doesn't exist
+    }
+
     public boolean returnBook(int bookId) {
 
         Book book = searchBook(bookId);
@@ -152,5 +169,34 @@ public class LibraryService {
             }
         }
         return null;
+    }
+
+    public List<BookInventoryDto> getAggregatedInventory() {
+        Map<String, BookInventoryDto> inventoryMap = new LinkedHashMap<>();
+        for (Book book : books) {
+            String isbn = book.getIsbn();
+            if (isbn == null || isbn.trim().isEmpty())
+                continue;
+
+            if (!inventoryMap.containsKey(isbn)) {
+                String extraField = "N/A";
+                if (book instanceof FictionBook)
+                    extraField = ((FictionBook) book).getGenre();
+                else if (book instanceof AcademicBook)
+                    extraField = ((AcademicBook) book).getSubject();
+                else if (book instanceof Magazine)
+                    extraField = ((Magazine) book).getIssueNumber();
+
+                inventoryMap.put(isbn,
+                        new BookInventoryDto(isbn, book.getTitle(), book.getAuthor(), book.getType(), extraField));
+            }
+            BookInventoryDto dto = inventoryMap.get(isbn);
+            dto.incrementTotal();
+            if (book.isAvailable()) {
+                dto.incrementAvailable();
+            }
+        }
+        return new ArrayList<>(inventoryMap.values());
+
     }
 }
