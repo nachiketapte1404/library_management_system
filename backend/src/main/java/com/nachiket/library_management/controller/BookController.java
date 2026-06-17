@@ -69,7 +69,7 @@ public class BookController {
     }
     // public List<Book> getBooks() {
 
-    //     return libraryService.getAllBooks();
+    // return libraryService.getAllBooks();
     // }
 
     @GetMapping("/{bookId}")
@@ -91,16 +91,19 @@ public class BookController {
     @PostMapping("/issue/{isbn}/{userId}")
     public ResponseEntity<String> issueBook(@PathVariable String isbn, @PathVariable int userId) {
         boolean issued = libraryService.issueBookByIsbn(isbn, userId);
-        if(issued)
-        {
+        if (issued) {
             System.out.println("Issued to user: " + userId);
             return ResponseEntity.ok("Book checked out successfully");
-        }
-        else
-        {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Issue Failed: No available copies left for ISBN: " + isbn);
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Issue Failed: No available copies left for ISBN: " + isbn);
 
         }
+    }
+
+    @GetMapping("/user/{userId}")
+    public List<Book> getBorrowedBooks(@PathVariable int userId) {
+        return libraryService.getBooksBorrowedByUser(userId);
     }
 
     @PostMapping("/{bookId}/return")

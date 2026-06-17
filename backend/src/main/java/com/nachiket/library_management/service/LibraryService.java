@@ -146,6 +146,18 @@ public class LibraryService {
         return false; // No copies left or ISBN doesn't exist
     }
 
+
+    public List<Book> getBooksBorrowedByUser(int userId) {
+        List<Book> userCopies = new ArrayList<>();
+        for (Book book : books) {
+            // If the book is checked out and matches the requested User ID
+            if (!book.isAvailable() && book.getIssuedToUserId() != null && book.getIssuedToUserId() == userId) {
+                userCopies.add(book);
+            }
+        }
+        return userCopies;
+    }
+
     public boolean returnBook(int bookId) {
 
         Book book = searchBook(bookId);

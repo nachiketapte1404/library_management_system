@@ -379,38 +379,37 @@ async function viewMyBorrowedBooks() {
     const userId = parseInt(userIdInput);
 
     try {
-        // Fetch the fresh master list from your backend API
-        const response = await fetch(API_URL);
-        const allBooks = await response.json();
+        // 🚀 Hit the new dedicated user tracking endpoint!
+        const response = await fetch(`${API_URL}/user/${userId}`);
+        if (!response.ok) {
+            throw new Error("Failed to pull user specific data records");
+        }
 
-        // Filter out books where issuedToUserId matches the entered ID
-        const myBorrowedBooks = allBooks.filter(book => book.issuedToUserId === userId);
+        const myBorrowedCopies = await response.json(); // Gets raw Book instances
 
-        // Clear previous rows
+        // Clear out old rows
         tbody.innerHTML = "";
 
-        if (myBorrowedBooks.length === 0) {
-            // Show "no books" message and hide the table
+        if (myBorrowedCopies.length === 0) {
             table.style.display = "none";
             noBooksMsg.style.display = "block";
         } else {
-            // Hide message and construct table rows
             noBooksMsg.style.display = "none";
             table.style.display = "table";
 
-            myBorrowedBooks.forEach(book => {
+            myBorrowedCopies.forEach(copy => {
                 tbody.innerHTML += `
                 <tr>
-                    <td>${book.bookId}</td>
-                    <td>${book.isbn ?? "N/A"}</td>
-                    <td>${book.title}</td>
-                    <td>${book.author}</td>
+                    <td><strong>${copy.bookId}</strong></td> <!-- Shows actual returnable ID -->
+                    <td>${copy.isbn ?? "N/A"}</td>
+                    <td>${copy.title}</td>
+                    <td>${copy.author}</td>
                 </tr>`;
             });
         }
     } catch (error) {
-        console.error("Error fetching personal inventory tracking:", error);
-        alert("Failed to pull your personal account list from the server.");
+        console.error("User list aggregation error:", error);
+        alert("Failed to retrieve your borrowed tracking list from the server.");
     }
 }
 
