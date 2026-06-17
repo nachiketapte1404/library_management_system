@@ -81,14 +81,48 @@ public class LibraryService {
         return null;
     }
 
-    public boolean deleteBook(int bookId) {
+    // public boolean deleteBook(int bookId) {
 
-        boolean deleted = books.removeIf(book -> book.getBookId() == bookId);
-        if (deleted) {
-            fileManager.saveBooks(books);
+    // boolean deleted = books.removeIf(book -> book.getBookId() == bookId);
+    // if (deleted) {
+    // fileManager.saveBooks(books);
+    // }
+
+    // return deleted;
+    // }
+
+    public String deleteAllCopiesByIsbn(String isbn) {
+        List<Book> copiesToDelete = new ArrayList<>();
+
+        for (Book book : books) {
+            if (book.getIsbn() != null && book.getIsbn().equalsIgnoreCase(isbn)) {
+                // Rule check: If any copy is currently checked out, block the whole transaction
+                if (!book.isAvailable()) {
+                    return "Deletion Blocked: Cannot delete catalog entry because one or more copies are currently checked out.";
+                }
+                copiesToDelete.add(book);
+            }
         }
 
-        return deleted;
+        if (copiesToDelete.isEmpty()) {
+            return "Error: No books found matching ISBN " + isbn;
+        }
+
+        // Perform bulk removal
+        books.removeAll(copiesToDelete);
+        fileManager.saveBooks(books);
+        return "SUCCESS: All physical copies under ISBN " + isbn + " have been removed.";
+    }
+
+    public boolean removeSingleCopyById(int bookId) {
+        for (int i = 0; i < books.size(); i++) {
+            if (books.get(i).getBookId() == bookId) {
+                books.remove(i);
+                fileManager.saveBooks(books); // Commit change to books.txt
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean addUser(User user) {
@@ -145,7 +179,6 @@ public class LibraryService {
         }
         return false; // No copies left or ISBN doesn't exist
     }
-
 
     public List<Book> getBooksBorrowedByUser(int userId) {
         List<Book> userCopies = new ArrayList<>();

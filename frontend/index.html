@@ -162,6 +162,18 @@
         <button onclick="issueBook()">Issue</button>
       </div>
 
+      <div id="adminLostSection">
+        <h2 id="lostBookh2">Report Lost Book (Decommission Copy)</h2>
+        <div id="lostbookDiv">
+          <input
+            type="number"
+            id="lostBookId"
+            placeholder="Enter Book ID"
+          />
+          <button onclick="reportLostCopy()">Confirm Deletion</button>
+        </div>
+      </div>
+
       <div id="everyoneReturnSection">
         <h2>Return Book</h2>
         <input type="number" id="returnBookId" placeholder="Book ID" />

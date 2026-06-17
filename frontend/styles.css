@@ -68,3 +68,23 @@ td {
     display: none;
     margin-top: 15px;
 }
+
+#lostBookh2 {
+    color: #dc3545;
+    margin-top: 30px;
+}
+
+#lostbookDiv {
+    border: 1px solid #dc3545;
+    padding: 15px;
+    border-radius: 4px;
+    background-color: #fff8f8;
+}
+
+#lostbookDiv button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    cursor: pointer;
+}

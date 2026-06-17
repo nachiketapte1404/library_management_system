@@ -27,7 +27,7 @@ function applyRoleVisibility() {
     document.getElementById("adminAddUserSection").style.display = is_admin ? "block" : "none";
     document.getElementById("adminUsersTableSection").style.display = is_admin ? "block" : "none";
     document.getElementById("everyoneIssueSection").style.display = "block";
-
+    document.getElementById("adminLostSection").style.display = is_admin ? "block" : "none";
     // EVERYONE panel (Always visible to both roles)
     document.getElementById("everyoneReturnSection").style.display = "block";
 
@@ -232,7 +232,7 @@ async function loadBooks() {
 
         catalog.forEach(item => {
             // N/A button placeholder for aggregated rows
-            let actionCell = is_admin ? `<td><button style="opacity:0.5; cursor:not-allowed;" disabled>N/A</button></td>` : "";
+            let actionCell = is_admin ? `<td><button onclick="deleteEntireCatalogTitle('${item.isbn}')" style="background-color: #dc3545; color: white; border: none; padding: 4px 8px; cursor: pointer;">Delete Title</button></td>` : "";
 
             tbody.innerHTML += `
             <tr>
@@ -410,6 +410,55 @@ async function viewMyBorrowedBooks() {
     } catch (error) {
         console.error("User list aggregation error:", error);
         alert("Failed to retrieve your borrowed tracking list from the server.");
+    }
+}
+
+async function deleteEntireCatalogTitle(isbn) {
+    if (!confirm(`Warning: This will delete ALL physical copies under ISBN ${isbn}. Proceed only if all items are on the shelves.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/catalog/${isbn}`, {
+            method: "DELETE"
+        });
+
+        const textMessage = await response.text();
+        alert(textMessage);
+
+        if (response.ok) {
+            loadBooks(); // Fresh catalog refresh
+        }
+    } catch (error) {
+        console.error("Catalog drop communication failure:", error);
+    }
+}
+
+async function reportLostCopy() {
+    const bookIdInput = document.getElementById("lostBookId").value.trim();
+    if (!bookIdInput) {
+        alert("Please input a valid physical Book ID to report as lost.");
+        return;
+    }
+
+    if (!confirm(`Are you certain Book ID ${bookIdInput} is lost? This permanently updates inventory records regardless of borrow states.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/lost/${bookIdInput}`, {
+            method: "DELETE"
+        });
+
+        const feedback = await response.text();
+        alert(feedback);
+
+        if (response.ok) {
+            document.getElementById("lostBookId").value = "";
+            loadBooks(); // Re-calculate summary catalog totals
+        }
+    } catch (error) {
+        console.error("Lost reporting link error:", error);
     }
 }
 
