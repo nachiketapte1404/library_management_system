@@ -2,6 +2,42 @@ const API_URL = "http://localhost:8080/books";
 const USER_API = "http://localhost:8080/users";
 
 let isNewIsbn = true;
+let currentRole = 'ADMIN';
+
+function setRole(role) {
+    currentRole = role;
+    const userBtn = document.getElementById("userRoleBtn");
+    const adminBtn = document.getElementById("adminRoleBtn");
+
+    if (role === "ADMIN") {
+        adminBtn.classList.add("active");
+        userBtn.classList.remove("active");
+    }
+    else {
+        adminBtn.classList.remove("active");
+        userBtn.classList.add("active");
+    }
+
+    applyRoleVisibility();
+}
+
+function applyRoleVisibility() {
+    const is_admin = (currentRole === "ADMIN");
+    document.getElementById("adminAddBookSection").style.display = is_admin ? "block" : "none";
+    document.getElementById("adminAddUserSection").style.display = is_admin ? "block" : "none";
+    document.getElementById("adminUsersTableSection").style.display = is_admin ? "block" : "none";
+    document.getElementById("adminIssueSection").style.display = is_admin ? "block" : "none"; // Updated target
+
+    // EVERYONE panel (Always visible to both roles)
+    document.getElementById("everyoneReturnSection").style.display = "block";
+
+    // Toggle Table Header Action column wrapper visibility
+    const actionHeader = document.querySelector(".admin-action-col");
+    if (actionHeader) {
+        actionHeader.style.display = is_admin ? "table-cell" : "none";
+    }
+    loadBooks();
+}
 
 function toggleGenreField() {
     const type = document.getElementById("bookType").value;
@@ -112,7 +148,7 @@ async function addBookBatch() {
     try {
         const response = await fetch(API_URL, {
             method: "POST",
-            headers: {"Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
 
@@ -187,23 +223,21 @@ async function loadBooks() {
     console.log(books);
     const tbody = document.querySelector("#bookTable tbody");
     tbody.innerHTML = "";
+
+    const is_admin = (currentRole === "ADMIN");
     books.forEach(book => {
+        let actionCell = is_admin ? `<td><button onclick="deleteBook(${book.bookId})">Delete</button></td>` : "";
+
         tbody.innerHTML += `
-            <tr>
-                <td>${book.bookId}</td>
-                <td>${book.isbn ?? "N/A"}</td>
-                <td>${book.title}</td>
-                <td>${book.author}</td>
-                <td>${book.available}</td>
-                <td>${book.issuedToUserId ?? "None"}</td>
-                <td>
-                    <button
-                        onclick="deleteBook(${book.bookId})">
-                        Delete
-                    </button>
-                </td>
-            </tr>
-            `;
+        <tr>
+            <td>${book.bookId}</td>
+            <td>${book.isbn ?? "N/A"}</td>
+            <td>${book.title}</td>
+            <td>${book.author}</td>
+            <td>${book.available}</td>
+            <td>${book.issuedToUserId ?? "None"}</td>
+            ${actionCell}
+        </tr>`;
     });
 }
 
@@ -320,3 +354,4 @@ async function returnBook() {
 
 loadBooks();
 loadUsers();
+applyRoleVisibility();
