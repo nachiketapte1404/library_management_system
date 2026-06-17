@@ -87,8 +87,8 @@ public class BookController {
         return "Book Not Found";
     }
 
-    @PostMapping("/{bookId}/issue/{userId}")
-    
+    // @PostMapping("/{bookId}/issue/{userId}")
+    @PostMapping("/issue/{isbn}/{userId}")
     public ResponseEntity<String> issueBook(@PathVariable String isbn, @PathVariable int userId) {
         boolean issued = libraryService.issueBookByIsbn(isbn, userId);
         if(issued)
