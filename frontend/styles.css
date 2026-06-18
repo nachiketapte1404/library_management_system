@@ -1,67 +1,127 @@
+* {
+    box-sizing: border-box;
+}
+
 body {
-    font-family: Arial;
-    background: #f2f2f2;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f8f9fa;
+    margin: 0;
+    padding: 0;
+    color: #333;
 }
 
 .container {
-    width: 80%;
+    width: 75%;
     margin: auto;
     margin-top: 30px;
+    padding-bottom: 60px;
 }
 
-input {
+h1 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 40px;
+}
+
+/* 🚀 The Card Block Style - Separating each feature completely */
+.section-block {
+    background-color: white;
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.section-block h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #4e73df;
+    font-size: 1.4rem;
+    border-bottom: 2px solid #eaecf4;
+    padding-bottom: 10px;
+}
+
+/* Inline row wrapper utility */
+.form-inline-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
     width: 100%;
-    padding: 10px;
-    margin-top: 10px;
+}
+
+.form-inline-row input {
+    margin-top: 0;
+    flex: 1;
+}
+
+.form-inline-row button {
+    margin-top: 0;
+    white-space: nowrap;
+}
+
+/* Inputs & Buttons Customizations */
+input, select {
+    width: 100%;
+    padding: 10px 14px;
+    margin-top: 8px;
+    border: 1px solid #d1d3e2;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.15s ease-in-out;
+}
+
+input:focus, select:focus {
+    border-color: #bac8f3;
+    outline: 0;
 }
 
 button {
     margin-top: 10px;
     padding: 10px 20px;
+    cursor: pointer;
+    border: 1px solid #4e73df;
+    background-color: #4e73df;
+    color: white;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 14px;
+    transition: background-color 0.15s ease;
 }
 
+button:hover {
+    background-color: #2e59d9;
+}
+
+/* Data Tables Structure */
 table {
     width: 100%;
-    margin-top: 20px;
+    margin-top: 15px;
     border-collapse: collapse;
 }
 
-th,
-td {
-    border: 1px solid black;
-    padding: 10px;
+th, td {
+    border: 1px solid #e3e6f0;
+    padding: 12px;
+    text-align: left;
 }
 
-.role-switcher {
-    background-color: #f0f2f5;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 10px;
-    border-bottom: 2px solid #ccc;
-    font-family: sans-serif;
-}
-
-.role-btn {
-    padding: 6px 12px;
-    cursor: pointer;
-    border: 1px solid #ccc;
-    background: white;
+th {
+    background-color: #f8f9fc;
+    color: #4e73df;
     font-weight: bold;
 }
 
-.role-btn.active {
-    background-color: #007bff;
-    color: white;
-    border-color: #007bff;
+tr:nth-child(even) {
+    background-color: #fdfdfe;
 }
 
+/* Dynamic State Trackers */
 #noBooksMessage {
     display: none;
-    color: #666;
+    color: #858796;
     font-style: italic;
-    margin-top: 10px;
+    margin-top: 15px;
 }
 
 #myBorrowedTable {
@@ -69,22 +129,58 @@ td {
     margin-top: 15px;
 }
 
+/* Role Switcher Layout Banner */
+.role-switcher {
+    background-color: #ffffff;
+    padding: 12px 30px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #e3e6f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.role-switcher span {
+    font-weight: bold;
+    color: #5a5c69;
+}
+
+.role-btn {
+    padding: 8px 16px;
+    cursor: pointer;
+    border: 1px solid #d1d3e2;
+    background: #f8f9fc;
+    color: #5a5c69;
+    font-weight: bold;
+    margin-top: 0;
+    border-radius: 6px;
+}
+
+.role-btn.active {
+    background-color: #4e73df;
+    color: white;
+    border-color: #4e73df;
+}
+
+/* Lost Book Sub-Card adjustments */
 #lostBookh2 {
-    color: #dc3545;
-    margin-top: 30px;
+    color: #e74a3b;
+    border-bottom-color: #fadbd8;
 }
 
 #lostbookDiv {
-    border: 1px solid #dc3545;
-    padding: 15px;
-    border-radius: 4px;
+    border: 1px solid #f5c6cb;
+    padding: 20px;
+    border-radius: 6px;
     background-color: #fff8f8;
 }
 
 #lostbookDiv button {
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    cursor: pointer;
+    background-color: #e74a3b;
+    border-color: #e74a3b;
+}
+
+#lostbookDiv button:hover {
+    background-color: #c0392b;
 }

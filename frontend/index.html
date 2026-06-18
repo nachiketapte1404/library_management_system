@@ -4,7 +4,6 @@
     <title>Library Management</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
-
   <body>
     <div class="role-switcher">
       <span>Current View:</span>
@@ -23,22 +22,24 @@
     <div class="container">
       <h1>Library Management System</h1>
 
-      <div id="adminAddBookSection">
+      <div id="adminAddBookSection" class="section-block">
         <h2>Add Books to Inventory</h2>
         <div class="add-book-form">
-          <div class="form-group">
+          <div class="form-inline-row">
             <input type="text" id="isbn" placeholder="Enter ISBN Number" />
             <button onclick="verifyISBN()">Verify ISBN</button>
           </div>
 
           <div id="isbnDetailsSection" style="margin-top: 15px">
-            <div class="form-group">
+            <div style="display: flex; gap: 12px">
               <input type="text" id="title" placeholder="Book Title" disabled />
               <input type="text" id="author" placeholder="Author" disabled />
             </div>
 
-            <div class="form-group" style="margin-top: 10px">
-              <label for="bookType">Book Classification: </label>
+            <div style="margin-top: 15px">
+              <label for="bookType" style="font-weight: bold"
+                >Book Classification:
+              </label>
               <select id="bookType" onchange="toggleGenreField()" disabled>
                 <option value="GENERAL">General / Standard</option>
                 <option value="FICTION">Fiction</option>
@@ -47,21 +48,21 @@
               </select>
             </div>
 
-            <div id="genreGroup" style="display: none; margin-top: 10px">
+            <div id="genreGroup" style="display: none">
               <input
                 type="text"
                 id="genre"
                 placeholder="Genre (e.g., Sci-Fi, Fantasy)"
               />
             </div>
-            <div id="subjectGroup" style="display: none; margin-top: 10px">
+            <div id="subjectGroup" style="display: none">
               <input
                 type="text"
                 id="subject"
                 placeholder="Subject (e.g., Physics, History)"
               />
             </div>
-            <div id="issueNumberGroup" style="display: none; margin-top: 10px">
+            <div id="issueNumberGroup" style="display: none">
               <input
                 type="text"
                 id="issueNumber"
@@ -69,7 +70,7 @@
               />
             </div>
 
-            <div class="form-group" style="margin-top: 10px">
+            <div class="form-inline-row" style="margin-top: 15px">
               <input
                 type="number"
                 id="quantity"
@@ -77,11 +78,7 @@
                 value="1"
                 min="1"
               />
-              <button
-                id="submitBookBtn"
-                onclick="addBookBatch()"
-                style="display: block; margin-top: 10px"
-              >
+              <button id="submitBookBtn" onclick="addBookBatch()">
                 Add Copies to Inventory
               </button>
             </div>
@@ -89,31 +86,42 @@
         </div>
       </div>
 
-      <h2>Search Book</h2>
-      <input type="number" id="searchBookId" placeholder="Enter Book ID" />
-      <button onclick="searchBook()">Search</button>
-      <div id="searchResult"></div>
+      <div class="section-block">
+        <h2>Search Book Catalog</h2>
+        <div class="form-inline-row">
+          <input
+            type="text"
+            id="searchIsbn"
+            placeholder="Enter Book ISBN Number"
+          />
+          <button onclick="searchBook()">Search Catalog</button>
+        </div>
+        <div id="searchResult"></div>
+      </div>
 
-      <h2>Books List</h2>
-      <table id="bookTable">
-        <thead>
-          <tr>
-            <th>ISBN</th>
-            <th>Title</th>
-            <th>Author</th>
-            <th>Classification</th>
-            <th>Extra Spec</th>
-            <th>Total Copies</th>
-            <th>Available</th>
-            <th>Borrowed</th>
-            <th class="admin-action-col">Action</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <div id="userBorrowedBooksSection" style="margin-top: 30px">
+      <div class="section-block">
+        <h2>Books Directory Catalog</h2>
+        <table id="bookTable">
+          <thead>
+            <tr>
+              <th>ISBN</th>
+              <th>Title</th>
+              <th>Author</th>
+              <th>Classification</th>
+              <th>Extra Spec</th>
+              <th>Total Copies</th>
+              <th>Available</th>
+              <th>Borrowed</th>
+              <th class="admin-action-col">Action</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div id="userBorrowedBooksSection" class="section-block">
         <h2>My Borrowed Books</h2>
-        <div class="form-group">
+        <div class="form-inline-row">
           <input
             type="number"
             id="viewUserBooksId"
@@ -135,15 +143,23 @@
         </table>
         <p id="noBooksMessage">You currently have no books checked out.</p>
       </div>
-      <div id="adminAddUserSection">
+
+      <div id="adminAddUserSection" class="section-block">
         <h2>Add User</h2>
-        <input type="number" id="userId" placeholder="User ID" />
-        <input type="text" id="userName" placeholder="User Name" />
-        <button onclick="addUser()">Add User</button>
+        <div style="display: flex; gap: 12px; align-items: flex-end">
+          <input type="number" id="userId" placeholder="User ID (Numeric)" />
+          <input type="text" id="userName" placeholder="User Name" />
+          <input
+            type="text"
+            id="userUniqueCard"
+            placeholder="Unique ID (e.g., National ID, Email)"
+          />
+          <button onclick="addUser()" style="margin-top: 0">Add User</button>
+        </div>
       </div>
 
-      <div id="adminUsersTableSection">
-        <h2>Users</h2>
+      <div id="adminUsersTableSection" class="section-block">
+        <h2>Users Registry</h2>
         <table id="userTable">
           <thead>
             <tr>
@@ -155,29 +171,147 @@
         </table>
       </div>
 
-      <div id="everyoneIssueSection">
-        <h2>Issue Book</h2>
-        <input type="text" id="issueIsbn" placeholder="Enter Book ISBN" />
-        <input type="number" id="issueUserId" placeholder="User ID" />
-        <button onclick="issueBook()">Issue</button>
-      </div>
-
-      <div id="adminLostSection">
-        <h2 id="lostBookh2">Report Lost Book (Decommission Copy)</h2>
-        <div id="lostbookDiv">
-          <input
-            type="number"
-            id="lostBookId"
-            placeholder="Enter Book ID"
-          />
-          <button onclick="reportLostCopy()">Confirm Deletion</button>
+      <div id="everyoneIssueSection" class="section-block">
+        <h2>Issue Book Copy</h2>
+        <div style="display: flex; gap: 12px; align-items: flex-end">
+          <input type="text" id="issueIsbn" placeholder="Enter Book ISBN" />
+          <input type="number" id="issueUserId" placeholder="User ID" />
+          <button onclick="issueBook()" style="margin-top: 0">Issue</button>
         </div>
       </div>
 
-      <div id="everyoneReturnSection">
-        <h2>Return Book</h2>
-        <input type="number" id="returnBookId" placeholder="Book ID" />
-        <button onclick="returnBook()">Return</button>
+      <div id="everyoneReturnSection" class="section-block">
+        <h2>Return Book Copy</h2>
+        <div class="form-inline-row">
+          <input
+            type="number"
+            id="returnBookId"
+            placeholder="Enter Unique Return Book ID"
+          />
+          <button onclick="returnBook()">Return Book</button>
+        </div>
+      </div>
+
+      <div id="adminLostSection" class="section-block">
+        <h2 id="lostBookh2">Report Lost Book (Decommission Copy)</h2>
+        <div id="lostbookDiv">
+          <p style="margin: 0 0 12px 0; color: #555; font-size: 14px">
+            Enter the unique physical tracking ID to permanently scrub this item
+            copy from storage records.
+          </p>
+          <div class="lost-input-row">
+            <input
+              type="number"
+              id="lostBookId"
+              placeholder="Enter Book ID (e.g., 5)"
+            />
+            <button onclick="reportLostCopy()">Confirm Deletion</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      id="editBookModal"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <div
+        style="
+          background-color: white;
+          padding: 25px;
+          border-radius: 8px;
+          width: 400px;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        "
+      >
+        <h3 style="margin-top: 0; color: #4e73df">
+          Edit Title Catalog Metadata
+        </h3>
+        <p style="font-size: 14px; color: #666">
+          Modifying ISBN:
+          <span
+            id="editModalIsbnDisplay"
+            style="font-weight: bold; color: #4e73df"
+          ></span>
+        </p>
+
+        <input type="hidden" id="editModalIsbn" />
+        <input type="hidden" id="editModalType" />
+
+        <div style="margin-bottom: 12px">
+          <label
+            style="
+              display: block;
+              font-weight: bold;
+              margin-bottom: 4px;
+              font-size: 14px;
+            "
+            >Book Title:</label
+          >
+          <input type="text" id="editModalTitle" style="margin-top: 0" />
+        </div>
+
+        <div style="margin-bottom: 12px">
+          <label
+            style="
+              display: block;
+              font-weight: bold;
+              margin-bottom: 4px;
+              font-size: 14px;
+            "
+            >Author / Publisher:</label
+          >
+          <input type="text" id="editModalAuthor" style="margin-top: 0" />
+        </div>
+
+        <div id="editModalExtraGroup" style="margin-bottom: 15px">
+          <label
+            id="editModalExtraLabel"
+            style="
+              display: block;
+              font-weight: bold;
+              margin-bottom: 4px;
+              font-size: 14px;
+            "
+            >Extra Specification:</label
+          >
+          <input type="text" id="editModalExtraValue" style="margin-top: 0" />
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px">
+          <button
+            onclick="closeEditModal()"
+            style="
+              background-color: #858796;
+              border-color: #858796;
+              color: white;
+              padding: 8px 14px;
+            "
+          >
+            Cancel
+          </button>
+          <button
+            onclick="submitCatalogUpdate()"
+            style="
+              background-color: #1cc88a;
+              border-color: #1cc88a;
+              color: white;
+              padding: 8px 14px;
+            "
+          >
+            Save Changes
+          </button>
+        </div>
       </div>
     </div>
 

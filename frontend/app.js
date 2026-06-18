@@ -28,7 +28,6 @@ function applyRoleVisibility() {
     document.getElementById("adminUsersTableSection").style.display = is_admin ? "block" : "none";
     document.getElementById("everyoneIssueSection").style.display = "block";
     document.getElementById("adminLostSection").style.display = is_admin ? "block" : "none";
-    // EVERYONE panel (Always visible to both roles)
     document.getElementById("everyoneReturnSection").style.display = "block";
 
     // Toggle Table Header Action column wrapper visibility
@@ -216,6 +215,76 @@ async function addBookBatch() {
 //     }
 // }
 
+// Open the catalog editor popup and auto-populate existing metadata strings
+function openEditModal(isbn, title, author, type, extraField) {
+    document.getElementById("editModalIsbnDisplay").innerText = isbn;
+    document.getElementById("editModalIsbn").value = isbn;
+    document.getElementById("editModalType").value = type;
+    document.getElementById("editModalTitle").value = title;
+    document.getElementById("editModalAuthor").value = author;
+
+    const extraGroup = document.getElementById("editModalExtraGroup");
+    const extraLabel = document.getElementById("editModalExtraLabel");
+    const extraInput = document.getElementById("editModalExtraValue");
+
+    // Set dynamic custom field labeling matching polymorphic structures
+    if (type === "FICTION") {
+        extraGroup.style.display = "block";
+        extraLabel.innerText = "Genre:";
+        extraInput.value = extraField;
+    } else if (type === "ACADEMIC") {
+        extraGroup.style.display = "block";
+        extraLabel.innerText = "Subject:";
+        extraInput.value = extraField;
+    } else if (type === "MAGAZINE") {
+        extraGroup.style.display = "block";
+        extraLabel.innerText = "Issue / Vol Number:";
+        extraInput.value = extraField;
+    } else {
+        extraGroup.style.display = "none";
+        extraInput.value = "N/A";
+    }
+
+    document.getElementById("editBookModal").style.display = "flex";
+}
+
+function closeEditModal() {
+    document.getElementById("editBookModal").style.display = "none";
+}
+
+// Fire HTTP PUT request payload to execute cascading update on Java models
+async function submitCatalogUpdate() {
+    const isbn = document.getElementById("editModalIsbn").value;
+    const title = document.getElementById("editModalTitle").value.trim();
+    const author = document.getElementById("editModalAuthor").value.trim();
+    const extraValue = document.getElementById("editModalExtraValue").value.trim();
+
+    if (!title || !author) {
+        alert("Title and Author values cannot be blank.");
+        return;
+    }
+
+    const updatePayload = { title, author, extraValue };
+
+    try {
+        const response = await fetch(`${API_URL}/update/${isbn}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatePayload)
+        });
+
+        const feedbackMessage = await response.text();
+        alert(feedbackMessage);
+
+        if (response.ok) {
+            closeEditModal();
+            loadBooks(); // Refresh UI table catalog data metrics instantly!
+        }
+    } catch (error) {
+        console.error("Catalog update channel failure:", error);
+    }
+}
+
 async function loadBooks() {
     try {
         const response = await fetch(API_URL);
@@ -232,8 +301,10 @@ async function loadBooks() {
 
         catalog.forEach(item => {
             // N/A button placeholder for aggregated rows
-            let actionCell = is_admin ? `<td><button onclick="deleteEntireCatalogTitle('${item.isbn}')" style="background-color: #dc3545; color: white; border: none; padding: 4px 8px; cursor: pointer;">Delete Title</button></td>` : "";
-
+            let actionCell = is_admin ? `<td>
+    <button onclick="openEditModal('${item.isbn}', '${item.title.replace(/'/g, "\\'")}', '${item.author.replace(/'/g, "\\'")}', '${item.type}', '${item.extraField.replace(/'/g, "\\'")}')" style="background-color: #28a745; color: white; border: none; padding: 4px 8px; cursor: pointer; margin-right: 5px;">Edit</button>
+    <button onclick="deleteEntireCatalogTitle('${item.isbn}')" style="background-color: #dc3545; color: white; border: none; padding: 4px 8px; cursor: pointer;">Delete Title</button>
+</td>` : "";
             tbody.innerHTML += `
             <tr>
                 <td><strong>${item.isbn}</strong></td>
@@ -255,24 +326,43 @@ async function loadBooks() {
 }
 
 async function searchBook() {
-    const bookId = document.getElementById("searchBookId").value;
-    const response = await fetch(`${API_URL}/${bookId}`);
-    const book = await response.json();
-    const result = document.getElementById("searchResult");
-    if (!book) {
-        result.innerHTML =
-            "<p>Book not found</p>";
+    const isbnInput = document.getElementById("searchIsbn").value.trim();
+    const resultDiv = document.getElementById("searchResult");
+
+    if (!isbnInput) {
+        alert("Please enter an ISBN number to perform a search.");
         return;
     }
-    result.innerHTML = `
-        <h3>Book Details</h3>
 
-        <p>ID: ${book.bookId}</p>
-        <p>Title: ${book.title}</p>
-        <p>Author: ${book.author}</p>
-        <p>Available: ${book.available}</p>
-        <p>Issued Status: ${book.issuedToUserId}</p>
-    `;
+    try {
+        // Hit our updated catalog search route
+        const response = await fetch(`${API_URL}/search/${isbnInput}`);
+
+        if (response.status === 404) {
+            resultDiv.innerHTML = `<p style="color: #dc3545; font-weight: bold; margin-top: 15px;">Book profile not found for ISBN: ${isbnInput}</p>`;
+            return;
+        }
+
+        const item = await response.json(); // Receives the BookInventoryDto payload
+
+        resultDiv.innerHTML = `
+            <div style="background-color: white; border: 1px solid #ccc; padding: 15px; border-radius: 4px; margin-top: 15px; max-width: 550px;">
+                <h3 style="margin-top: 0; color: #007bff;">Catalog Match Details</h3>
+                <p><strong>ISBN:</strong> ${item.isbn}</p>
+                <p><strong>Title:</strong> ${item.title}</p>
+                <p><strong>Author / Publisher:</strong> ${item.author}</p>
+                <p><strong>Classification:</strong> ${item.type}</p>
+                <p><strong>Extra Spec:</strong> ${item.extraField}</p>
+                <hr style="border: 0; border-top: 1px solid #eee;" />
+                <p><strong>Total Copies in Library:</strong> ${item.totalCopies}</p>
+                <p><strong>Available on Shelves:</strong> <span style="color: green; font-weight: bold;">${item.availableCopies}</span></p>
+                <p><strong>Currently Borrowed:</strong> <span style="color: #666;">${item.totalCopies - item.availableCopies}</span></p>
+            </div>
+        `;
+    } catch (error) {
+        console.error("Catalog look up failure:", error);
+        resultDiv.innerHTML = "<p style='color: red;'>Failed to connect to search service registry.</p>";
+    }
 }
 
 async function deleteBook(bookId) {
@@ -288,30 +378,38 @@ async function deleteBook(bookId) {
 async function addUser() {
     const userIdField = document.getElementById("userId");
     const userNameField = document.getElementById("userName");
+    const uniqueCardField = document.getElementById("userUniqueCard");
+
     const userId = parseInt(userIdField.value);
-    const name = userNameField.value;
-    if (!userId || !name) {
-        alert("Please enter both User ID and Name.");
+    const name = userNameField.value.trim();
+    const uniqueIdCard = uniqueCardField.value.trim();
+
+    if (!userId || !name || !uniqueIdCard) {
+        alert("Please enter User ID, Name, and a Unique ID Card reference.");
         return;
     }
-    const user = { userId: userId, name: name };
+
+    // Include uniqueIdCard in the request body
+    const userPayload = { userId, name, uniqueIdCard };
+
     try {
         const response = await fetch(USER_API, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(user)
+            body: JSON.stringify(userPayload)
         });
+
         const resultText = await response.text();
-        if (response.ok) {
-            alert(resultText);
+        alert(resultText);
+
+        if (response.ok && !resultText.includes("Failed")) {
             userIdField.value = "";
             userNameField.value = "";
-            loadUsers();
-        } else {
-            alert(resultText);
+            uniqueCardField.value = "";
+            loadUsers(); // Refresh the grid
         }
     } catch (error) {
-        console.error("Network error:", error);
+        console.error("Network error during user addition:", error);
     }
 }
 
