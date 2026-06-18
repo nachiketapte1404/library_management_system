@@ -8,7 +8,7 @@ public class Magazine extends Book {
     }
 
     public Magazine(int id, String isbn, String title, String author, String issueNumber) {
-        super(id, title, author, isbn);
+        super(id, isbn, title, author);
         this.issueNumber = issueNumber;
     }
 

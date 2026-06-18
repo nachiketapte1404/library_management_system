@@ -9,7 +9,7 @@ public class FictionBook extends Book {
     }
 
     public FictionBook(int id, String isbn, String title, String author, String genre) {
-        super(id, title, author, isbn);
+        super(id, isbn, title, author);
         this.genre = genre;
     }
 

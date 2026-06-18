@@ -31,11 +31,6 @@ public class FileManager {
                     type = "MAGAZINE";
                     extraField = ((Magazine) book).getIssueNumber();
                 }
-                System.out.println(
-                        "Saving: " +
-                                book.getBookId() +
-                                " -> " +
-                                book.getIssuedToUserId());
                 writer.write(
                         book.getBookId() + "," +
                                 type + "," +
@@ -53,16 +48,16 @@ public class FileManager {
     }
 
     public void saveUsers(List<User> users) {
-        try (BufferedWriter writer = new BufferedWriter(
-                new FileWriter("users.txt"))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
             for (User user : users) {
                 writer.write(
                         user.getUserId() + "," +
-                                user.getName());
+                                user.getName() + "," +
+                                (user.getUniqueIdCard() != null ? user.getUniqueIdCard() : "null"));
                 writer.newLine();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Error saving users file data tracking: " + e.getMessage());
         }
     }
 
@@ -72,8 +67,7 @@ public class FileManager {
         if (!file.exists()) {
             return books;
         }
-        try (BufferedReader reader = new BufferedReader(
-                new FileReader(FILE_NAME))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] data = line.split(",");
@@ -81,24 +75,30 @@ public class FileManager {
                     continue;
                 int id = Integer.parseInt(data[0]);
                 String type = data[1];
-                String isbn = data[2];
-                String title = data[3];
-                String author = data[4];
+                String author = data[2];
+                String isbn = data[3];
+                String title = data[4];
                 boolean availability = Boolean.parseBoolean(data[5]);
+
                 Integer issuedToUserId = null;
                 if (!("null".equals(data[6])))
                     issuedToUserId = Integer.parseInt(data[6]);
+
+                // Clean extra field handling: convert literal "null" text or empty data to
+                // "N/A"
+                String extraField = (data.length > 7 && !"null".equalsIgnoreCase(data[7])) ? data[7] : "N/A";
+
                 Book book;
-                String extraField = (data.length > 7) ? data[7] : "null";
-                if ("FICTION".equals(type) && data.length > 7) {
-                    book = new FictionBook(id, isbn, title, author, data[7]);
+                if ("FICTION".equals(type)) {
+                    book = new FictionBook(id, isbn, title, author, extraField);
                 } else if ("ACADEMIC".equals(type)) {
                     book = new AcademicBook(id, isbn, title, author, extraField);
                 } else if ("MAGAZINE".equals(type)) {
                     book = new Magazine(id, isbn, title, author, extraField);
                 } else {
-                    book = new Book(id, isbn, title, author);
+                    book = new Book(id, title, author, isbn);
                 }
+
                 book.setAvailable(availability);
                 book.setIssuedToUserId(issuedToUserId);
                 books.add(book);
@@ -110,46 +110,30 @@ public class FileManager {
     }
 
     public List<User> loadUsers() {
-
         List<User> users = new ArrayList<>();
-
         File file = new File("users.txt");
 
         if (!file.exists()) {
-
             return users;
         }
 
-        try (BufferedReader reader = new BufferedReader(
-                new FileReader(file))) {
-
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
-
             while ((line = reader.readLine()) != null) {
-
                 String[] data = line.split(",");
+                if (data.length >= 2) {
+                    int id = Integer.parseInt(data[0]);
+                    String name = data[1];
 
-                if (data.length != 2) {
+                    // 🚀 Guard check: Fallback to "N/A" if reading an old pre-existing data line
+                    String uniqueIdCard = (data.length > 2) ? data[2] : "N/A";
 
-                    continue;
+                    users.add(new User(id, name, uniqueIdCard));
                 }
-
-                User user = new User();
-
-                user.setUserId(
-                        Integer.parseInt(data[0]));
-
-                user.setName(
-                        data[1]);
-
-                users.add(user);
             }
-
-        } catch (IOException e) {
-
-            e.printStackTrace();
+        } catch (IOException | NumberFormatException e) {
+            System.err.println("Error reading users registry snapshot tracking records: " + e.getMessage());
         }
-
         return users;
     }
 }

@@ -137,4 +137,36 @@ public class BookController {
                     .body("Return Failed: Book ID not found.");
         }
     }
+
+    // Inside BookController.java
+
+    @GetMapping("/search/{isbn}")
+    public ResponseEntity<BookInventoryDto> searchBookByIsbn(@PathVariable String isbn) {
+        BookInventoryDto result = libraryService.searchCatalogByIsbn(isbn);
+        if (result == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // Return 404 if ISBN not found
+        }
+        return ResponseEntity.ok(result); // Return 200 with the aggregated catalog metrics
+    }
+
+    @PutMapping("/update/{isbn}")
+    public ResponseEntity<String> updateBookMetadata(@PathVariable String isbn,
+            @RequestBody Map<String, String> payload) {
+        String title = payload.get("title");
+        String author = payload.get("author");
+        String extraValue = payload.getOrDefault("extraValue", "N/A");
+
+        if (title == null || author == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing required update values.");
+        }
+
+        boolean success = libraryService.updateBookMetadataByIsbn(isbn, title, author, extraValue);
+
+        if (success) {
+            return ResponseEntity.ok("Catalog metadata updated and cascaded to all physical copies successfully.");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Update Failed: Target ISBN not found in network registry.");
+        }
+    }
 }

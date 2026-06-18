@@ -125,6 +125,66 @@ public class LibraryService {
         return false;
     }
 
+    // Inside LibraryService.java
+
+    public BookInventoryDto searchCatalogByIsbn(String isbn) {
+        BookInventoryDto searchResult = null;
+
+        for (Book book : books) {
+            if (book.getIsbn() != null && book.getIsbn().equalsIgnoreCase(isbn)) {
+                // Initialize the DTO matching this title's metadata if we haven't yet
+                if (searchResult == null) {
+                    String extraField = "N/A";
+                    if (book instanceof com.nachiket.library_management.model.FictionBook) {
+                        extraField = ((com.nachiket.library_management.model.FictionBook) book).getGenre();
+                    } else if (book instanceof com.nachiket.library_management.model.AcademicBook) {
+                        extraField = ((com.nachiket.library_management.model.AcademicBook) book).getSubject();
+                    } else if (book instanceof com.nachiket.library_management.model.Magazine) {
+                        extraField = ((com.nachiket.library_management.model.Magazine) book).getIssueNumber();
+                    }
+
+                    searchResult = new BookInventoryDto(
+                            book.getIsbn(), book.getTitle(), book.getAuthor(), book.getType(), extraField);
+                }
+
+                // Dynamically increment catalog counters
+                searchResult.incrementTotal();
+                if (book.isAvailable()) {
+                    searchResult.incrementAvailable();
+                }
+            }
+        }
+
+        return searchResult; // Returns null if no copies found with this ISBN
+    }
+
+    public boolean updateBookMetadataByIsbn(String isbn, String newTitle, String newAuthor, String extraValue) {
+        boolean updatedAny = false;
+
+        for (Book book : books) {
+            if (book.getIsbn() != null && book.getIsbn().equalsIgnoreCase(isbn)) {
+                book.setTitle(newTitle);
+                book.setAuthor(newAuthor);
+
+                if (book instanceof com.nachiket.library_management.model.FictionBook) {
+                    ((com.nachiket.library_management.model.FictionBook) book).setGenre(extraValue);
+                } else if (book instanceof com.nachiket.library_management.model.AcademicBook) {
+                    ((com.nachiket.library_management.model.AcademicBook) book).setSubject(extraValue);
+                } else if (book instanceof com.nachiket.library_management.model.Magazine) {
+                    ((com.nachiket.library_management.model.Magazine) book).setIssueNumber(extraValue);
+                }
+
+                updatedAny = true;
+            }
+        }
+
+        if (updatedAny) {
+            fileManager.saveBooks(books);
+        }
+
+        return updatedAny;
+    }
+
     public boolean addUser(User user) {
         for (User existingUser : users) {
             if (existingUser.getUserId() == user.getUserId()) {
@@ -243,5 +303,23 @@ public class LibraryService {
         }
         return new ArrayList<>(inventoryMap.values());
 
+    }
+
+    public String registerUser(User newUser) {
+        for (User existingUser : users) {
+            // 1. Check if the system-generated numeric User ID already exists
+            if (existingUser.getUserId() == newUser.getUserId()) {
+                return "Registration Failed: User ID " + newUser.getUserId() + " is already taken.";
+            }
+
+            // 2. Check if the text-based Unique ID Card string already exists
+            if (existingUser.getUniqueIdCard() != null &&
+                    existingUser.getUniqueIdCard().equalsIgnoreCase(newUser.getUniqueIdCard())) {
+                return "Registration Failed: A user with this Unique Identifier card is already registered.";
+            }
+        }
+        users.add(newUser);
+        fileManager.saveUsers(users); // Make sure your fileManager handles the 3rd column now!
+        return "SUCCESS: User registered successfully.";
     }
 }

@@ -8,7 +8,7 @@ public class AcademicBook extends Book {
     }
 
     public AcademicBook(int id, String isbn, String title, String author, String subject) {
-        super(id, title, author, isbn);
+        super(id, isbn, title, author);
         this.subject = subject;
     }
 
