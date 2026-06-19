@@ -68,7 +68,6 @@ public class Book {
         this.issuedToUserId = issuedToUserId;
     }
 
-    // Near the bottom of Book.java
     public String getType() {
         if (this instanceof FictionBook)
             return "FICTION";

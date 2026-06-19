@@ -75,19 +75,14 @@ public class FileManager {
                     continue;
                 int id = Integer.parseInt(data[0]);
                 String type = data[1];
-                String author = data[2];
-                String isbn = data[3];
-                String title = data[4];
+                String isbn = data[2];
+                String title = data[3];
+                String author = data[4];
                 boolean availability = Boolean.parseBoolean(data[5]);
-
                 Integer issuedToUserId = null;
                 if (!("null".equals(data[6])))
                     issuedToUserId = Integer.parseInt(data[6]);
-
-                // Clean extra field handling: convert literal "null" text or empty data to
-                // "N/A"
                 String extraField = (data.length > 7 && !"null".equalsIgnoreCase(data[7])) ? data[7] : "N/A";
-
                 Book book;
                 if ("FICTION".equals(type)) {
                     book = new FictionBook(id, isbn, title, author, extraField);
@@ -96,9 +91,8 @@ public class FileManager {
                 } else if ("MAGAZINE".equals(type)) {
                     book = new Magazine(id, isbn, title, author, extraField);
                 } else {
-                    book = new Book(id, title, author, isbn);
+                    book = new Book(id, isbn, title, author);
                 }
-
                 book.setAvailable(availability);
                 book.setIssuedToUserId(issuedToUserId);
                 books.add(book);
@@ -112,11 +106,9 @@ public class FileManager {
     public List<User> loadUsers() {
         List<User> users = new ArrayList<>();
         File file = new File("users.txt");
-
         if (!file.exists()) {
             return users;
         }
-
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -124,15 +116,12 @@ public class FileManager {
                 if (data.length >= 2) {
                     int id = Integer.parseInt(data[0]);
                     String name = data[1];
-
-                    // 🚀 Guard check: Fallback to "N/A" if reading an old pre-existing data line
                     String uniqueIdCard = (data.length > 2) ? data[2] : "N/A";
-
                     users.add(new User(id, name, uniqueIdCard));
                 }
             }
         } catch (IOException | NumberFormatException e) {
-            System.err.println("Error reading users registry snapshot tracking records: " + e.getMessage());
+            System.err.println("Error reading users registry tracking records: " + e.getMessage());
         }
         return users;
     }

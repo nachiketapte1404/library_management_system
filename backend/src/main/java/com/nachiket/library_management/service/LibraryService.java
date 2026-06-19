@@ -1,11 +1,6 @@
 package com.nachiket.library_management.service;
 
-import com.nachiket.library_management.model.AcademicBook;
-import com.nachiket.library_management.model.Book;
-import com.nachiket.library_management.model.BookInventoryDto;
-import com.nachiket.library_management.model.FictionBook;
-import com.nachiket.library_management.model.Magazine;
-import com.nachiket.library_management.model.User;
+import com.nachiket.library_management.model.*;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -72,67 +67,39 @@ public class LibraryService {
         return books;
     }
 
-    public Book searchBook(int bookId) {
-        for (Book book : books) {
-            if (book.getBookId() == bookId) {
-                return book;
-            }
-        }
-        return null;
-    }
-
-    // public boolean deleteBook(int bookId) {
-
-    // boolean deleted = books.removeIf(book -> book.getBookId() == bookId);
-    // if (deleted) {
-    // fileManager.saveBooks(books);
-    // }
-
-    // return deleted;
-    // }
-
     public String deleteAllCopiesByIsbn(String isbn) {
         List<Book> copiesToDelete = new ArrayList<>();
-
         for (Book book : books) {
             if (book.getIsbn() != null && book.getIsbn().equalsIgnoreCase(isbn)) {
-                // Rule check: If any copy is currently checked out, block the whole transaction
                 if (!book.isAvailable()) {
                     return "Deletion Blocked: Cannot delete catalog entry because one or more copies are currently checked out.";
                 }
                 copiesToDelete.add(book);
             }
         }
-
         if (copiesToDelete.isEmpty()) {
             return "Error: No books found matching ISBN " + isbn;
         }
-
-        // Perform bulk removal
         books.removeAll(copiesToDelete);
         fileManager.saveBooks(books);
-        return "SUCCESS: All physical copies under ISBN " + isbn + " have been removed.";
+        return "SUCCESS: All copies having ISBN " + isbn + " have been removed.";
     }
 
     public boolean removeSingleCopyById(int bookId) {
         for (int i = 0; i < books.size(); i++) {
             if (books.get(i).getBookId() == bookId) {
                 books.remove(i);
-                fileManager.saveBooks(books); // Commit change to books.txt
+                fileManager.saveBooks(books);
                 return true;
             }
         }
         return false;
     }
 
-    // Inside LibraryService.java
-
     public BookInventoryDto searchCatalogByIsbn(String isbn) {
         BookInventoryDto searchResult = null;
-
         for (Book book : books) {
             if (book.getIsbn() != null && book.getIsbn().equalsIgnoreCase(isbn)) {
-                // Initialize the DTO matching this title's metadata if we haven't yet
                 if (searchResult == null) {
                     String extraField = "N/A";
                     if (book instanceof com.nachiket.library_management.model.FictionBook) {
@@ -142,20 +109,17 @@ public class LibraryService {
                     } else if (book instanceof com.nachiket.library_management.model.Magazine) {
                         extraField = ((com.nachiket.library_management.model.Magazine) book).getIssueNumber();
                     }
-
                     searchResult = new BookInventoryDto(
                             book.getIsbn(), book.getTitle(), book.getAuthor(), book.getType(), extraField);
                 }
 
-                // Dynamically increment catalog counters
                 searchResult.incrementTotal();
                 if (book.isAvailable()) {
                     searchResult.incrementAvailable();
                 }
             }
         }
-
-        return searchResult; // Returns null if no copies found with this ISBN
+        return searchResult;
     }
 
     public boolean updateBookMetadataByIsbn(String isbn, String newTitle, String newAuthor, String extraValue) {
@@ -165,23 +129,19 @@ public class LibraryService {
             if (book.getIsbn() != null && book.getIsbn().equalsIgnoreCase(isbn)) {
                 book.setTitle(newTitle);
                 book.setAuthor(newAuthor);
-
-                if (book instanceof com.nachiket.library_management.model.FictionBook) {
-                    ((com.nachiket.library_management.model.FictionBook) book).setGenre(extraValue);
-                } else if (book instanceof com.nachiket.library_management.model.AcademicBook) {
-                    ((com.nachiket.library_management.model.AcademicBook) book).setSubject(extraValue);
-                } else if (book instanceof com.nachiket.library_management.model.Magazine) {
-                    ((com.nachiket.library_management.model.Magazine) book).setIssueNumber(extraValue);
+                if (book instanceof FictionBook) {
+                    ((FictionBook) book).setGenre(extraValue);
+                } else if (book instanceof AcademicBook) {
+                    ((AcademicBook) book).setSubject(extraValue);
+                } else if (book instanceof Magazine) {
+                    ((Magazine) book).setIssueNumber(extraValue);
                 }
-
                 updatedAny = true;
             }
         }
-
         if (updatedAny) {
             fileManager.saveBooks(books);
         }
-
         return updatedAny;
     }
 
@@ -201,49 +161,22 @@ public class LibraryService {
         return users;
     }
 
-    public boolean issueBook(int bookId, int userId) {
-        Book book = searchBook(bookId);
-        User user = searchUser(userId);
-        if (book == null) {
-            System.out.println("Issue Failed: Book with ID " + bookId + " not found.");
-            return false;
-        }
-        System.out.println("Before issue - Assigned User ID: " + book.getIssuedToUserId());
-        if (user == null) {
-            System.out.println("Issue Failed: User with ID " + userId + " not found.");
-            return false;
-        }
-        if (!book.isAvailable()) {
-            System.out.println("Issue Failed: Book is already issued.");
-            return false;
-        }
-        book.setAvailable(false);
-        book.setIssuedToUserId(userId);
-        System.out.println("After issue - Assigned User ID: " + book.getIssuedToUserId());
-
-        fileManager.saveBooks(books);
-
-        return true;
-    }
-
     public boolean issueBookByIsbn(String isbn, int userId) {
         for (Book book : books) {
-            // Find the first physical copy matching the ISBN that is currently free
+            // Find the first book id matching the ISBN that is not borrowed
             if (book.getIsbn() != null && book.getIsbn().equalsIgnoreCase(isbn) && book.isAvailable()) {
                 book.setAvailable(false);
                 book.setIssuedToUserId(userId);
                 fileManager.saveBooks(books);
-                System.out.println("Auto-assigned Physical Book ID: " + book.getBookId() + " to user: " + userId);
                 return true;
             }
         }
-        return false; // No copies left or ISBN doesn't exist
+        return false;
     }
 
     public List<Book> getBooksBorrowedByUser(int userId) {
         List<Book> userCopies = new ArrayList<>();
         for (Book book : books) {
-            // If the book is checked out and matches the requested User ID
             if (!book.isAvailable() && book.getIssuedToUserId() != null && book.getIssuedToUserId() == userId) {
                 userCopies.add(book);
             }
@@ -252,18 +185,18 @@ public class LibraryService {
     }
 
     public boolean returnBook(int bookId) {
-
-        Book book = searchBook(bookId);
-
-        if (book == null) {
+        Book foundBook = null;
+        for (Book book : books) {
+            if (book.getBookId() == bookId) {
+                foundBook = book;
+            }
+        }
+        if (foundBook == null) {
             return false;
         }
-
-        book.setAvailable(true);
-        book.setIssuedToUserId(null);
-
+        foundBook.setAvailable(true);
+        foundBook.setIssuedToUserId(null);
         fileManager.saveBooks(books);
-
         return true;
     }
 
@@ -307,19 +240,49 @@ public class LibraryService {
 
     public String registerUser(User newUser) {
         for (User existingUser : users) {
-            // 1. Check if the system-generated numeric User ID already exists
             if (existingUser.getUserId() == newUser.getUserId()) {
                 return "Registration Failed: User ID " + newUser.getUserId() + " is already taken.";
             }
-
-            // 2. Check if the text-based Unique ID Card string already exists
             if (existingUser.getUniqueIdCard() != null &&
                     existingUser.getUniqueIdCard().equalsIgnoreCase(newUser.getUniqueIdCard())) {
                 return "Registration Failed: A user with this Unique Identifier card is already registered.";
             }
         }
         users.add(newUser);
-        fileManager.saveUsers(users); // Make sure your fileManager handles the 3rd column now!
+        fileManager.saveUsers(users);
         return "SUCCESS: User registered successfully.";
+    }
+
+    public String updateUser(int userId, String newName, String newUniqueIdCard) {
+        User target = searchUser(userId);
+        if (target == null) {
+            return "Update Failed: User ID " + userId + " not found.";
+        }
+        for (User existing : users) {
+            if (existing.getUserId() != userId
+                    && existing.getUniqueIdCard() != null
+                    && existing.getUniqueIdCard().equalsIgnoreCase(newUniqueIdCard)) {
+                return "Update Failed: Unique ID card already in use.";
+            }
+        }
+        target.setName(newName);
+        target.setUniqueIdCard(newUniqueIdCard);
+        fileManager.saveUsers(users);
+        return "SUCCESS: User details updated.";
+    }
+
+    public String deleteUser(int userId) {
+        List<Book> borrowed = getBooksBorrowedByUser(userId);
+        if (!borrowed.isEmpty()) {
+            return "Deletion Blocked: User has " + borrowed.size() + " book(s) checked out.";
+        }
+        for (int i = 0; i < users.size(); i++) {
+            if (users.get(i).getUserId() == userId) {
+                users.remove(i);
+                fileManager.saveUsers(users);
+                return "SUCCESS: User " + userId + " has been removed.";
+            }
+        }
+        return "Error: User ID " + userId + " not found.";
     }
 }

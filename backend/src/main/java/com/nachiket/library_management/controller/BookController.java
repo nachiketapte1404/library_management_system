@@ -28,9 +28,28 @@ public class BookController {
     public ResponseEntity<Book> checkIsbn(@PathVariable String isbn) {
         Book existingBook = libraryService.findBookByIsbn(isbn);
         if (existingBook == null) {
-            return ResponseEntity.noContent().build(); // Return 204 if brand new ISBN
+            return ResponseEntity.noContent().build();
         }
-        return ResponseEntity.ok(existingBook); // Return 200 with metadata if it exists
+        return ResponseEntity.ok(existingBook);
+    }
+
+    @GetMapping
+    public List<BookInventoryDto> getBook() {
+        return libraryService.getAggregatedInventory();
+    }
+
+    @GetMapping("/search/{isbn}")
+    public ResponseEntity<BookInventoryDto> searchBookByIsbn(@PathVariable String isbn) {
+        BookInventoryDto result = libraryService.searchCatalogByIsbn(isbn);
+        if (result == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/user/{userId}")
+    public List<Book> getBorrowedBooks(@PathVariable int userId) {
+        return libraryService.getBooksBorrowedByUser(userId);
     }
 
     @PostMapping
@@ -63,67 +82,16 @@ public class BookController {
 
     }
 
-    @GetMapping
-    public List<BookInventoryDto> getBook() {
-        return libraryService.getAggregatedInventory();
-    }
-    // public List<Book> getBooks() {
-
-    // return libraryService.getAllBooks();
-    // }
-
-    @GetMapping("/{bookId}")
-    public Book searchBook(@PathVariable int bookId) {
-
-        return libraryService.searchBook(bookId);
-    }
-
-    // @DeleteMapping("/{bookId}")
-    // public String deleteBook(@PathVariable int bookId) {
-    // boolean deleted = libraryService.deleteBook(bookId);
-    // if (deleted) {
-    // return "Book Deleted";
-    // }
-    // return "Book Not Found";
-    // }
-    @DeleteMapping("/catalog/{isbn}")
-    public ResponseEntity<String> deleteCatalogTitle(@PathVariable String isbn) {
-        String result = libraryService.deleteAllCopiesByIsbn(isbn);
-        if (result.startsWith("SUCCESS")) {
-            return ResponseEntity.ok(result);
-        } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
-        }
-    }
-
-    @DeleteMapping("/lost/{bookId}")
-    public ResponseEntity<String> reportLostBook(@PathVariable int bookId) {
-        boolean removed = libraryService.removeSingleCopyById(bookId);
-        if (removed) {
-            return ResponseEntity.ok("Book copy ID " + bookId + " marked as lost and removed from inventory tracking.");
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Lost Log Error: Physical Book ID " + bookId + " does not exist.");
-        }
-    }
-
-    // @PostMapping("/{bookId}/issue/{userId}")
     @PostMapping("/issue/{isbn}/{userId}")
     public ResponseEntity<String> issueBook(@PathVariable String isbn, @PathVariable int userId) {
         boolean issued = libraryService.issueBookByIsbn(isbn, userId);
         if (issued) {
-            System.out.println("Issued to user: " + userId);
             return ResponseEntity.ok("Book checked out successfully");
         } else {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Issue Failed: No available copies left for ISBN: " + isbn);
 
         }
-    }
-
-    @GetMapping("/user/{userId}")
-    public List<Book> getBorrowedBooks(@PathVariable int userId) {
-        return libraryService.getBooksBorrowedByUser(userId);
     }
 
     @PostMapping("/{bookId}/return")
@@ -136,17 +104,6 @@ public class BookController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Return Failed: Book ID not found.");
         }
-    }
-
-    // Inside BookController.java
-
-    @GetMapping("/search/{isbn}")
-    public ResponseEntity<BookInventoryDto> searchBookByIsbn(@PathVariable String isbn) {
-        BookInventoryDto result = libraryService.searchCatalogByIsbn(isbn);
-        if (result == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // Return 404 if ISBN not found
-        }
-        return ResponseEntity.ok(result); // Return 200 with the aggregated catalog metrics
     }
 
     @PutMapping("/update/{isbn}")
@@ -167,6 +124,27 @@ public class BookController {
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Update Failed: Target ISBN not found in network registry.");
+        }
+    }
+
+    @DeleteMapping("/catalog/{isbn}")
+    public ResponseEntity<String> deleteCatalogTitle(@PathVariable String isbn) {
+        String result = libraryService.deleteAllCopiesByIsbn(isbn);
+        if (result.startsWith("SUCCESS")) {
+            return ResponseEntity.ok(result);
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
+        }
+    }
+
+    @DeleteMapping("/lost/{bookId}")
+    public ResponseEntity<String> reportLostBook(@PathVariable int bookId) {
+        boolean removed = libraryService.removeSingleCopyById(bookId);
+        if (removed) {
+            return ResponseEntity.ok("Book copy ID " + bookId + " marked as lost and removed from inventory tracking.");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Lost Log Error: Physical Book ID " + bookId + " does not exist.");
         }
     }
 }

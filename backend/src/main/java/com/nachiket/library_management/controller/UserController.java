@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
@@ -32,5 +33,31 @@ public class UserController {
     public List<User> getUsers() {
 
         return libraryService.getAllUsers();
+    }
+
+    @PutMapping("/update/{userId}")
+    public ResponseEntity<String> updateUser(
+            @PathVariable int userId,
+            @RequestBody Map<String, String> payload) {
+        String name = payload.get("name");
+        String uniqueIdCard = payload.get("uniqueIdCard");
+        if (name == null || uniqueIdCard == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Missing required update values.");
+        }
+        String result = libraryService.updateUser(userId, name, uniqueIdCard);
+        if (result.startsWith("SUCCESS")) {
+            return ResponseEntity.ok(result);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
+    }
+
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<String> deleteUser(@PathVariable int userId) {
+        String result = libraryService.deleteUser(userId);
+        if (result.startsWith("SUCCESS")) {
+            return ResponseEntity.ok(result);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
     }
 }

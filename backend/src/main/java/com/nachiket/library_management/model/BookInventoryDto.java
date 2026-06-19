@@ -5,7 +5,7 @@ public class BookInventoryDto {
     private String title;
     private String author;
     private String type;
-    private String extraField; // Will hold genre, subject, or issue number
+    private String extraField;
     private int totalCopies;
     private int availableCopies;
 
@@ -27,7 +27,6 @@ public class BookInventoryDto {
         this.availableCopies++;
     }
 
-    // Getters
     public String getIsbn() {
         return isbn;
     }
