@@ -56,9 +56,29 @@ public class BookController {
     public ResponseEntity<String> addBook(@RequestBody Map<String, Object> payload) {
         try {
             String isbn = (String) payload.get("isbn");
+            if (isbn == null || isbn.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("ISBN number not found in payload");
+            }
             String title = (String) payload.get("title");
+            if (title == null || title.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Book title not found in payload");
+            }
             String author = (String) payload.get("author");
-            int quantity = Integer.parseInt(payload.get("quantity").toString());
+            if (author == null || author.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Author not found in payload ");
+            }
+            int quantity;
+            try {
+                quantity = Integer.parseInt(payload.get("quantity").toString());
+            } catch (NumberFormatException | NullPointerException e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Quantity must be a valid number.");
+            }
+            if (libraryService.findBookByIsbn(isbn) != null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Duplicate ISBN Number");
+            }
+            if (quantity <= 0) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Quantity must be greater than 0.");
+            }
             String type = payload.getOrDefault("type", "GENERAL").toString();
             Book templateBook;
             if ("FICTION".equalsIgnoreCase(type)) {
@@ -111,11 +131,15 @@ public class BookController {
             @RequestBody Map<String, String> payload) {
         String title = payload.get("title");
         String author = payload.get("author");
-        String extraValue = payload.getOrDefault("extraValue", "N/A");
 
         if (title == null || author == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing required update values.");
         }
+
+        String extraValue = payload.getOrDefault("extraValue",
+                payload.getOrDefault("genre",
+                        payload.getOrDefault("subject",
+                                payload.getOrDefault("issueNumber", "N/A"))));
 
         boolean success = libraryService.updateBookMetadataByIsbn(isbn, title, author, extraValue);
 
@@ -129,11 +153,15 @@ public class BookController {
 
     @DeleteMapping("/catalog/{isbn}")
     public ResponseEntity<String> deleteCatalogTitle(@PathVariable String isbn) {
-        String result = libraryService.deleteAllCopiesByIsbn(isbn);
-        if (result.startsWith("SUCCESS")) {
-            return ResponseEntity.ok(result);
-        } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
+        try {
+            boolean deleted = libraryService.deleteAllCopiesByIsbn(isbn);
+            if (deleted) {
+                return ResponseEntity.ok("Catalog title and all copies deleted successfully.");
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Delete Failed: ISBN not found.");
+            }
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
     }
 

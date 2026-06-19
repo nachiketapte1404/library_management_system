@@ -67,22 +67,27 @@ public class LibraryService {
         return books;
     }
 
-    public String deleteAllCopiesByIsbn(String isbn) {
+    public boolean deleteAllCopiesByIsbn(String isbn) {
         List<Book> copiesToDelete = new ArrayList<>();
+        boolean isbnExists = false;
+
         for (Book book : books) {
             if (book.getIsbn() != null && book.getIsbn().equalsIgnoreCase(isbn)) {
+                isbnExists = true;
                 if (!book.isAvailable()) {
-                    return "Deletion Blocked: Cannot delete catalog entry because one or more copies are currently checked out.";
+                    throw new IllegalStateException(
+                            "Cannot delete catalog entry because one or more copies are currently checked out.");
                 }
                 copiesToDelete.add(book);
             }
         }
-        if (copiesToDelete.isEmpty()) {
-            return "Error: No books found matching ISBN " + isbn;
+        if (!isbnExists) {
+            return false;
         }
+
         books.removeAll(copiesToDelete);
         fileManager.saveBooks(books);
-        return "SUCCESS: All copies having ISBN " + isbn + " have been removed.";
+        return true;
     }
 
     public boolean removeSingleCopyById(int bookId) {
@@ -238,51 +243,53 @@ public class LibraryService {
 
     }
 
-    public String registerUser(User newUser) {
+    public boolean registerUser(User newUser) {
         for (User existingUser : users) {
-            if (existingUser.getUserId() == newUser.getUserId()) {
-                return "Registration Failed: User ID " + newUser.getUserId() + " is already taken.";
+            if (existingUser.getUserId() != null && existingUser.getUserId().equals(newUser.getUserId())) {
+                return false;
             }
             if (existingUser.getUniqueIdCard() != null &&
                     existingUser.getUniqueIdCard().equalsIgnoreCase(newUser.getUniqueIdCard())) {
-                return "Registration Failed: A user with this Unique Identifier card is already registered.";
+                throw new IllegalArgumentException(
+                        "Registration Failed: A user with this Unique Identifier card is already registered.");
             }
         }
+
         users.add(newUser);
         fileManager.saveUsers(users);
-        return "SUCCESS: User registered successfully.";
+        return true;
     }
 
-    public String updateUser(int userId, String newName, String newUniqueIdCard) {
+    public boolean updateUser(int userId, String newName, String newUniqueIdCard) {
         User target = searchUser(userId);
         if (target == null) {
-            return "Update Failed: User ID " + userId + " not found.";
+            return false;
         }
         for (User existing : users) {
             if (existing.getUserId() != userId
                     && existing.getUniqueIdCard() != null
                     && existing.getUniqueIdCard().equalsIgnoreCase(newUniqueIdCard)) {
-                return "Update Failed: Unique ID card already in use.";
+                throw new IllegalArgumentException("Update Failed: Unique ID card already in use.");
             }
         }
         target.setName(newName);
         target.setUniqueIdCard(newUniqueIdCard);
         fileManager.saveUsers(users);
-        return "SUCCESS: User details updated.";
+        return true;
     }
 
-    public String deleteUser(int userId) {
+    public boolean deleteUser(int userId) {
         List<Book> borrowed = getBooksBorrowedByUser(userId);
         if (!borrowed.isEmpty()) {
-            return "Deletion Blocked: User has " + borrowed.size() + " book(s) checked out.";
+            throw new IllegalStateException("Deletion Blocked: User has " + borrowed.size() + " book(s) checked out.");
         }
         for (int i = 0; i < users.size(); i++) {
             if (users.get(i).getUserId() == userId) {
                 users.remove(i);
                 fileManager.saveUsers(users);
-                return "SUCCESS: User " + userId + " has been removed.";
+                return true;
             }
         }
-        return "Error: User ID " + userId + " not found.";
+        return false;
     }
 }
