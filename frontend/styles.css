@@ -10,10 +10,13 @@ body {
     color: #333;
 }
 
+.hidden {
+    display: none !important;
+}
+
 .container {
     width: 75%;
-    margin: auto;
-    margin-top: 30px;
+    margin: 30px auto 0;
     padding-bottom: 60px;
 }
 
@@ -23,7 +26,6 @@ h1 {
     margin-bottom: 40px;
 }
 
-/* 🚀 The Card Block Style - Separating each feature completely */
 .section-block {
     background-color: white;
     border: 1px solid #e3e6f0;
@@ -42,12 +44,15 @@ h1 {
     padding-bottom: 10px;
 }
 
-/* Inline row wrapper utility */
 .form-inline-row {
     display: flex;
     gap: 12px;
     align-items: flex-end;
     width: 100%;
+}
+
+.form-inline-row-spaced {
+    margin-top: 15px;
 }
 
 .form-inline-row input {
@@ -60,7 +65,6 @@ h1 {
     white-space: nowrap;
 }
 
-/* Inputs & Buttons Customizations */
 input, select {
     width: 100%;
     padding: 10px 14px;
@@ -93,7 +97,6 @@ button:hover {
     background-color: #2e59d9;
 }
 
-/* Data Tables Structure */
 table {
     width: 100%;
     margin-top: 15px;
@@ -116,20 +119,16 @@ tr:nth-child(even) {
     background-color: #fdfdfe;
 }
 
-/* Dynamic State Trackers */
 #noBooksMessage {
-    display: none;
     color: #858796;
     font-style: italic;
     margin-top: 15px;
 }
 
 #myBorrowedTable {
-    display: none;
     margin-top: 15px;
 }
 
-/* Role Switcher Layout Banner */
 .role-switcher {
     background-color: #ffffff;
     padding: 12px 30px;
@@ -138,7 +137,7 @@ tr:nth-child(even) {
     align-items: center;
     gap: 12px;
     border-bottom: 1px solid #e3e6f0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .role-switcher span {
@@ -163,8 +162,7 @@ tr:nth-child(even) {
     border-color: #4e73df;
 }
 
-/* Lost Book Sub-Card adjustments */
-#lostBookh2 {
+.lost-section-title {
     color: #e74a3b;
     border-bottom-color: #fadbd8;
 }
@@ -183,4 +181,166 @@ tr:nth-child(even) {
 
 #lostbookDiv button:hover {
     background-color: #c0392b;
+}
+
+.lost-book-description {
+    margin: 0 0 12px;
+    color: #555;
+    font-size: 14px;
+}
+
+#isbnDetailsSection {
+    margin-top: 15px;
+}
+
+.book-classification-group {
+    margin-top: 15px;
+}
+
+.book-classification-label {
+    font-weight: bold;
+}
+
+.book-type-field {
+    display: none;
+}
+
+.book-type-field.is-visible {
+    display: block;
+}
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.is-open {
+    display: flex;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 25px;
+    border-radius: 8px;
+    width: 400px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.modal-title {
+    margin-top: 0;
+    color: #4e73df;
+}
+
+.modal-description {
+    font-size: 14px;
+    color: #666;
+}
+
+.modal-isbn-value {
+    font-weight: bold;
+    color: #4e73df;
+}
+
+.modal-field {
+    margin-bottom: 12px;
+}
+
+.modal-field:last-of-type {
+    margin-bottom: 15px;
+}
+
+.modal-label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.modal-input {
+    margin-top: 0;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn-cancel {
+    background-color: #858796;
+    border-color: #858796;
+    color: white;
+    padding: 8px 14px;
+}
+
+.btn-save {
+    background-color: #1cc88a;
+    border-color: #1cc88a;
+    color: white;
+    padding: 8px 14px;
+}
+
+.btn-edit {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+.btn-delete {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.available-yes {
+    color: green;
+    font-weight: bold;
+}
+
+.available-no {
+    color: red;
+    font-weight: bold;
+}
+
+.text-muted {
+    color: #666;
+}
+
+.search-error {
+    color: #dc3545;
+    font-weight: bold;
+    margin-top: 15px;
+}
+
+.search-connection-error {
+    color: red;
+}
+
+.search-result-card {
+    background-color: white;
+    border: 1px solid #ccc;
+    padding: 15px;
+    border-radius: 4px;
+    margin-top: 15px;
+    max-width: 550px;
+}
+
+.search-result-title {
+    margin-top: 0;
+    color: #007bff;
+}
+
+.search-result-divider {
+    border: 0;
+    border-top: 1px solid #eee;
 }
