@@ -1,6 +1,8 @@
 package com.nachiket.library_management.service;
 
 import com.nachiket.library_management.model.*;
+import com.nachiket.library_management.repository.*;
+
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -11,15 +13,17 @@ import java.util.Map;
 @Service
 public class LibraryService {
 
-    private final FileManager fileManager;
+    private final FileBookRepository bookManager;
+    private final FileUserRepository userManager;
     private List<Book> books;
     private List<User> users;
     private int nextBookId = 1;
 
-    public LibraryService(FileManager fileManager) {
-        this.fileManager = fileManager;
-        books = fileManager.loadBooks();
-        users = fileManager.loadUsers();
+    public LibraryService(FileBookRepository bookManager, FileUserRepository userManager) {
+        this.bookManager = bookManager;
+        this.userManager = userManager;
+        books = bookManager.loadBooks();
+        users = userManager.loadUsers();
         for (Book book : books) {
             if (book.getBookId() >= nextBookId) {
                 nextBookId = book.getBookId() + 1;
@@ -43,11 +47,11 @@ public class LibraryService {
                 String genre = ((FictionBook) templateBook).getGenre();
                 fictionCopy.setGenre(genre);
                 newCopy = fictionCopy;
-            } else if (templateBook instanceof com.nachiket.library_management.model.AcademicBook) {
+            } else if (templateBook instanceof AcademicBook) {
                 AcademicBook academicCopy = new AcademicBook();
                 academicCopy.setSubject(((AcademicBook) templateBook).getSubject());
                 newCopy = academicCopy;
-            } else if (templateBook instanceof com.nachiket.library_management.model.Magazine) {
+            } else if (templateBook instanceof Magazine) {
                 Magazine magazineCopy = new Magazine();
                 magazineCopy.setIssueNumber(((Magazine) templateBook).getIssueNumber());
                 newCopy = magazineCopy;
@@ -60,7 +64,7 @@ public class LibraryService {
             newCopy.setIssuedToUserId(null);
             books.add(newCopy);
         }
-        fileManager.saveBooks(books);
+        bookManager.saveBooks(books);
     }
 
     public List<Book> getAllBooks() {
@@ -86,7 +90,7 @@ public class LibraryService {
         }
 
         books.removeAll(copiesToDelete);
-        fileManager.saveBooks(books);
+        bookManager.saveBooks(books);
         return true;
     }
 
@@ -94,7 +98,7 @@ public class LibraryService {
         for (int i = 0; i < books.size(); i++) {
             if (books.get(i).getBookId() == bookId) {
                 books.remove(i);
-                fileManager.saveBooks(books);
+                bookManager.saveBooks(books);
                 return true;
             }
         }
@@ -107,12 +111,12 @@ public class LibraryService {
             if (book.getIsbn() != null && book.getIsbn().equalsIgnoreCase(isbn)) {
                 if (searchResult == null) {
                     String extraField = "N/A";
-                    if (book instanceof com.nachiket.library_management.model.FictionBook) {
-                        extraField = ((com.nachiket.library_management.model.FictionBook) book).getGenre();
-                    } else if (book instanceof com.nachiket.library_management.model.AcademicBook) {
-                        extraField = ((com.nachiket.library_management.model.AcademicBook) book).getSubject();
-                    } else if (book instanceof com.nachiket.library_management.model.Magazine) {
-                        extraField = ((com.nachiket.library_management.model.Magazine) book).getIssueNumber();
+                    if (book instanceof FictionBook) {
+                        extraField = ((FictionBook) book).getGenre();
+                    } else if (book instanceof AcademicBook) {
+                        extraField = ((AcademicBook) book).getSubject();
+                    } else if (book instanceof Magazine) {
+                        extraField = ((Magazine) book).getIssueNumber();
                     }
                     searchResult = new BookInventoryDto(
                             book.getIsbn(), book.getTitle(), book.getAuthor(), book.getType(), extraField);
@@ -145,7 +149,7 @@ public class LibraryService {
             }
         }
         if (updatedAny) {
-            fileManager.saveBooks(books);
+            bookManager.saveBooks(books);
         }
         return updatedAny;
     }
@@ -158,7 +162,7 @@ public class LibraryService {
             }
         }
         users.add(user);
-        fileManager.saveUsers(users);
+        userManager.saveUsers(users);
         return true;
     }
 
@@ -172,7 +176,7 @@ public class LibraryService {
             if (book.getIsbn() != null && book.getIsbn().equalsIgnoreCase(isbn) && book.isAvailable()) {
                 book.setAvailable(false);
                 book.setIssuedToUserId(userId);
-                fileManager.saveBooks(books);
+                bookManager.saveBooks(books);
                 return true;
             }
         }
@@ -201,7 +205,7 @@ public class LibraryService {
         }
         foundBook.setAvailable(true);
         foundBook.setIssuedToUserId(null);
-        fileManager.saveBooks(books);
+        bookManager.saveBooks(books);
         return true;
     }
 
@@ -256,7 +260,7 @@ public class LibraryService {
         }
 
         users.add(newUser);
-        fileManager.saveUsers(users);
+        userManager.saveUsers(users);
         return true;
     }
 
@@ -274,7 +278,7 @@ public class LibraryService {
         }
         target.setName(newName);
         target.setUniqueIdCard(newUniqueIdCard);
-        fileManager.saveUsers(users);
+        userManager.saveUsers(users);
         return true;
     }
 
@@ -286,7 +290,7 @@ public class LibraryService {
         for (int i = 0; i < users.size(); i++) {
             if (users.get(i).getUserId() == userId) {
                 users.remove(i);
-                fileManager.saveUsers(users);
+                userManager.saveUsers(users);
                 return true;
             }
         }
