@@ -66,10 +66,17 @@ Open your terminal, navigate to the root directory of the backend project, and e
 
 
 ```bash
-./mvn spring-boot:run
-
+for Linux:
+mvn spring-boot:run
 or 
-/path/to/your/jdk17 ./mvn spring-boot:run
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+mvn spring-boot:run
+
+for windows
+$env:JAVA_HOME="C:\Program Files\Java\jdk-17" .\mvnw spring-boot:run
+or
+.\mvnw spring-boot:run
+
 ```
 
 The server will start backend on `http://localhost:8080`.

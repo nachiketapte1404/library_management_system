@@ -59,26 +59,50 @@ public class BookController {
             if (isbn == null || isbn.trim().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("ISBN number not found in payload");
             }
-            String title = (String) payload.get("title");
-            if (title == null || title.trim().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Book title not found in payload");
-            }
-            String author = (String) payload.get("author");
-            if (author == null || author.trim().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Author not found in payload ");
-            }
+
             int quantity;
             try {
                 quantity = Integer.parseInt(payload.get("quantity").toString());
             } catch (NumberFormatException | NullPointerException e) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Quantity must be a valid number.");
             }
-            if (libraryService.findBookByIsbn(isbn) != null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Duplicate ISBN Number");
-            }
             if (quantity <= 0) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Quantity must be greater than 0.");
             }
+
+            // Check if the book already exists in our system
+            Book existingBook = libraryService.findBookByIsbn(isbn);
+
+            if (existingBook != null) {
+                // BACKEND METADATA MISMATCH GUARD:
+                String incomingTitle = (String) payload.get("title");
+                String incomingAuthor = (String) payload.get("author");
+
+                // If they provided a title/author in the payload, make sure it matches what's in our DB
+                if (incomingTitle != null && !incomingTitle.trim().isEmpty() && !existingBook.getTitle().equalsIgnoreCase(incomingTitle.trim())) {
+                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                            .body("Inventory Conflict: The provided title does not match the registered book catalog for ISBN " + isbn);
+                }
+                if (incomingAuthor != null && !incomingAuthor.trim().isEmpty() && !existingBook.getAuthor().equalsIgnoreCase(incomingAuthor.trim())) {
+                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                            .body("Inventory Conflict: The provided author does not match the registered book catalog for ISBN " + isbn);
+                }
+
+                // RESTOCK FLOW: Everything is safe, update quantity
+                libraryService.addBooksBatch(existingBook, quantity);
+                return ResponseEntity.ok(quantity + " extra copies of '" + existingBook.getTitle() + "' restocked successfully.");
+            }
+
+            // NEW BOOK FLOW: The book doesn't exist, validate metadata fields
+            String title = (String) payload.get("title");
+            if (title == null || title.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Book title not found in payload");
+            }
+            String author = (String) payload.get("author");
+            if (author == null || author.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Author not found in payload");
+            }
+
             String type = payload.getOrDefault("type", "GENERAL").toString();
             Book templateBook;
             if ("FICTION".equalsIgnoreCase(type)) {
@@ -93,13 +117,14 @@ public class BookController {
             } else {
                 templateBook = new Book(0, isbn, title, author);
             }
+
             libraryService.addBooksBatch(templateBook, quantity);
             return ResponseEntity.ok(quantity + " copies added successfully.");
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Error processing inventory request: " + e.getMessage());
         }
-
     }
 
     @PostMapping("/issue/{isbn}/{userId}")
